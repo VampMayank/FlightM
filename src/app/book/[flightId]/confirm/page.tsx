@@ -9,10 +9,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, CheckCircle, AlertCircle, Loader2, Plane, User, Ticket } from 'lucide-react';
 
-import { use } from 'react';
-
-export default function ConfirmationPage({ params: paramsPromise }: { params: Promise<{ flightId: string }> }) {
-  const params = use(paramsPromise);
+export default function ConfirmationPage({ params: _paramsPromise }: { params: Promise<{ flightId: string }> }) {
   const router = useRouter();
   const supabase = createClient();
   const { selectedFlight, selectedSeat, passengerData, resetStore } = useFlightStore();
@@ -69,9 +66,10 @@ export default function ConfirmationPage({ params: paramsPromise }: { params: Pr
       // Success! Clear store and redirect
       resetStore();
       router.push('/my-bookings?success=true');
-    } catch (err: any) {
-      console.error('Booking failed:', err);
-      setError(err.message || 'An unexpected error occurred. Please try again.');
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      console.error('Booking failed:', error);
+      setError(error.message || 'An unexpected error occurred. Please try again.');
     } finally {
       setIsProcessing(false);
     }

@@ -13,7 +13,7 @@ export default function OfflinePage() {
       <div className="space-y-2">
         <h1 className="text-3xl font-black text-gray-900">You are offline</h1>
         <p className="text-gray-500 max-w-sm">
-          It looks like you've lost your internet connection. Some features may be unavailable until you're back online.
+          It looks like you&apos;ve lost your internet connection. Some features may be unavailable until you&apos;re back online.
         </p>
       </div>
       <div className="flex gap-4">

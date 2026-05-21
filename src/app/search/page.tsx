@@ -4,12 +4,12 @@ export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plane, Clock, ArrowRight, Filter } from 'lucide-react';
+import { Plane, Clock, ArrowRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useFlightStore } from '@/store/useFlightStore';
 import { Flight } from '@/types/database';
 import { Button } from '@/components/ui/button';
-import { format } from 'date-fns';
+import { format, differenceInMinutes } from 'date-fns';
 
 export default function SearchResultsPage() {
   const router = useRouter();
@@ -17,6 +17,13 @@ export default function SearchResultsPage() {
   const [flights, setFlights] = useState<Flight[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
+
+  const formatDuration = (departs: string, arrives: string) => {
+    const minutes = differenceInMinutes(new Date(arrives), new Date(departs));
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return `${h}h ${m}m`;
+  };
 
   useEffect(() => {
     async function fetchFlights() {
@@ -43,7 +50,8 @@ export default function SearchResultsPage() {
 
         if (error) throw error;
         setFlights(data || []);
-      } catch (error: any) {
+      } catch (err: unknown) {
+        const error = err as { message?: string };
         console.error('Error fetching flights (detailed):', JSON.stringify(error, null, 2));
         console.error('Raw error object:', error);
         if (error.message) console.error('Error Message:', error.message);
@@ -126,7 +134,7 @@ export default function SearchResultsPage() {
                   </div>
                   <div className="flex items-center gap-1 text-[10px] text-gray-400">
                     <Clock className="h-3 w-3" />
-                    <span>7h 30m</span>
+                    <span>{formatDuration(flight.departs_at, flight.arrives_at)}</span>
                   </div>
                 </div>
 

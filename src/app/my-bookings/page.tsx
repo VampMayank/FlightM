@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Booking } from '@/types/database';
 import { Button } from '@/components/ui/button';
@@ -16,12 +16,8 @@ export default function MyBookingsPage() {
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const supabase = createClient();
 
-  useEffect(() => {
-    fetchBookings();
-  }, [supabase]);
-
-  async function fetchBookings() {
-    setLoading(true);
+  const fetchBookings = useCallback(async (isInitial = false) => {
+    if (!isInitial) setLoading(true);
     try {
       const { data, error } = await supabase
         .from('bookings')
@@ -39,7 +35,12 @@ export default function MyBookingsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [supabase]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchBookings(true);
+  }, [fetchBookings]);
 
   const handleCancel = async (bookingId: string) => {
     if (!confirm('Are you sure you want to cancel this booking?')) return;
@@ -54,8 +55,9 @@ export default function MyBookingsPage() {
       
       // Refresh list
       await fetchBookings();
-    } catch (err: any) {
-      alert(err.message || 'Failed to cancel booking');
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      alert(error.message || 'Failed to cancel booking');
     } finally {
       setCancellingId(null);
     }

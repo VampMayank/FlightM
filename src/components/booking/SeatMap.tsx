@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Seat } from '@/types/database';
 import { cn } from '@/components/ui/button';
-import { Info } from 'lucide-react';
 
 interface SeatMapProps {
   flightId: string;
