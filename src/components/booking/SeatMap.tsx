@@ -109,7 +109,7 @@ export default function SeatMap({ flightId, selectedSeatId, onSelectSeat }: Seat
                             disabled={isOccupied}
                             onClick={() => onSelectSeat(seat)}
                             className={cn(
-                              'relative h-12 w-12 rounded-xl border-2 transition-all flex flex-col items-center justify-center shadow-sm',
+                              'relative h-12 w-12 rounded-xl border-2 transition-all flex flex-col items-center justify-center shadow-sm group/btn',
                               rowClass === 'first' && 'h-16 w-16 bg-amber-50/30 border-amber-200',
                               rowClass === 'business' && 'h-14 w-14 bg-indigo-50/30 border-indigo-200',
                               rowClass === 'economy' && 'bg-white border-slate-200',

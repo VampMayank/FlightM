@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFlightStore } from '@/store/useFlightStore';
 import { Button } from '@/components/ui/button';
@@ -23,8 +23,14 @@ export default function PassengerDetailsPage({ params: paramsPromise }: { params
     dob: '',
   });
 
+  // Effect to handle redirection if data is missing
+  useEffect(() => {
+    if (!selectedFlight || !selectedSeat) {
+      router.push('/search');
+    }
+  }, [selectedFlight, selectedSeat, router]);
+
   if (!selectedFlight || !selectedSeat) {
-    router.push('/search');
     return null;
   }
 

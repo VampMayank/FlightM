@@ -11,10 +11,12 @@ import { format } from 'date-fns';
 import { cn } from '@/components/ui/button';
 import Link from 'next/link';
 import { useFlightStore } from '@/store/useFlightStore';
+import { useUserStore } from '@/store/useUserStore';
 
 export default function MyBookingsPage() {
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { bookings: cachedBookings, setBookings: setCachedBookings } = useUserStore();
+  const [bookings, setBookings] = useState<Booking[]>(cachedBookings || []);
+  const [loading, setLoading] = useState(cachedBookings?.length === 0);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const supabase = createClient();
   const resetFlightStore = useFlightStore((state) => state.resetStore);
@@ -32,13 +34,16 @@ export default function MyBookingsPage() {
         .order('booked_at', { ascending: false });
 
       if (error) throw error;
-      setBookings(data || []);
+      const fetchedBookings = data || [];
+      setBookings(fetchedBookings);
+      setCachedBookings(fetchedBookings);
     } catch (error) {
       console.error('Error fetching bookings:', error);
+      // If offline, we still have the initial state from cachedBookings
     } finally {
       setLoading(false);
     }
-  }, [supabase]);
+  }, [supabase, setCachedBookings]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -69,7 +74,7 @@ export default function MyBookingsPage() {
     }
   };
 
-  if (loading) {
+  if (loading && bookings.length === 0) {
     return (
       <div className="flex justify-center p-12">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
@@ -128,14 +133,14 @@ export default function MyBookingsPage() {
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
                       <p className="text-2xl font-black text-gray-900">
-                        {format(new Date(booking.flight!.departs_at), 'HH:mm')}
+                        {booking.flight ? format(new Date(booking.flight.departs_at), 'HH:mm') : '--:--'}
                       </p>
-                      <p className="text-xs font-bold text-gray-400 uppercase">{booking.flight!.origin}</p>
+                      <p className="text-xs font-bold text-gray-400 uppercase">{booking.flight?.origin || 'Unknown'}</p>
                     </div>
 
                     <div className="flex-1 flex flex-col items-center px-4">
                       <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">
-                        {booking.flight!.flight_no}
+                        {booking.flight?.flight_no || '---'}
                       </p>
                       <div className="w-full h-px bg-gray-200 relative">
                         <Plane className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-4 w-4 text-blue-600 rotate-90" />
@@ -144,9 +149,9 @@ export default function MyBookingsPage() {
 
                     <div className="space-y-1 text-right">
                       <p className="text-2xl font-black text-gray-900">
-                        {format(new Date(booking.flight!.arrives_at), 'HH:mm')}
+                        {booking.flight ? format(new Date(booking.flight.arrives_at), 'HH:mm') : '--:--'}
                       </p>
-                      <p className="text-xs font-bold text-gray-400 uppercase">{booking.flight!.destination}</p>
+                      <p className="text-xs font-bold text-gray-400 uppercase">{booking.flight?.destination || 'Unknown'}</p>
                     </div>
                   </div>
 
@@ -154,13 +159,13 @@ export default function MyBookingsPage() {
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-gray-400" />
                       <span className="font-medium text-gray-600">
-                        {format(new Date(booking.flight!.departs_at), 'MMM dd, yyyy')}
+                        {booking.flight ? format(new Date(booking.flight.departs_at), 'MMM dd, yyyy') : 'No Date'}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-gray-400" />
                       <span className="font-medium text-gray-600">
-                        {booking.seat!.seat_number} ({booking.seat!.class})
+                        {booking.seat?.seat_number || '--'} ({booking.seat?.class || 'N/A'})
                       </span>
                     </div>
                   </div>
@@ -192,7 +197,7 @@ export default function MyBookingsPage() {
                   )}
                   {booking.status === 'cancelled' && (
                     <p className="text-[10px] font-bold text-gray-400 uppercase text-center italic">
-                      Cancelled on {format(new Date(), 'MMM dd')}
+                      Cancelled on {format(new Date(booking.booked_at), 'MMM dd')}
                     </p>
                   )}
                 </div>

@@ -28,8 +28,11 @@ export const useUserStore = create<UserState>()(
     {
       name: 'user-storage',
       storage: createJSONStorage(() => localStorage),
-      // Only persist the session
-      partialize: (state) => ({ session: state.session }),
+      // Persist session and cached bookings for offline access
+      partialize: (state) => ({ 
+        session: state.session,
+        bookings: state.bookings 
+      }),
     }
   )
 );

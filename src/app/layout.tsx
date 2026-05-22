@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Plane, User } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { LogoutButton } from "@/components/auth/LogoutButton";
+import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,8 +20,14 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  let user = null;
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch (error) {
+    console.error('Error fetching user in layout:', error);
+  }
 
   return (
     <html lang="en">
@@ -67,6 +74,8 @@ export default async function RootLayout({
         <main className="container mx-auto px-4 py-8">
           {children}
         </main>
+
+        <PWAInstallPrompt />
 
         <footer className="border-t bg-white py-8 mt-auto">
           <div className="container mx-auto px-4 text-center text-sm text-gray-500">

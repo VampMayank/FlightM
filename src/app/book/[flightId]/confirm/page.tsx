@@ -7,7 +7,9 @@ import { useRouter } from 'next/navigation';
 import { useFlightStore } from '@/store/useFlightStore';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, CheckCircle, AlertCircle, Loader2, Plane, User, Ticket, MapPin, ShieldCheck, Globe } from 'lucide-react';
+import { ChevronLeft, CheckCircle, AlertCircle, Loader2, Plane, User, Ticket, MapPin, ShieldCheck, Globe, Calendar } from 'lucide-react';
+import Link from 'next/link';
+import { format } from 'date-fns';
 
 export default function ConfirmationPage({ params: _paramsPromise }: { params: Promise<{ flightId: string }> }) {
   const router = useRouter();

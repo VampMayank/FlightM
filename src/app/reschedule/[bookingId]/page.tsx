@@ -58,6 +58,7 @@ export default function ReschedulePage() {
   }, [bookingId, supabase]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchInitialData();
   }, [fetchInitialData]);
 
@@ -80,8 +81,9 @@ export default function ReschedulePage() {
 
       alert('Booking rescheduled successfully!');
       router.push('/my-bookings');
-    } catch (err: any) {
-      alert(err.message || 'Failed to reschedule booking');
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      alert(error.message || 'Failed to reschedule booking');
     } finally {
       setRescheduling(false);
     }
