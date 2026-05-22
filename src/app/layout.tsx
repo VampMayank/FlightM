@@ -31,7 +31,14 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <body className={`${inter.className} min-h-screen bg-gray-50 text-gray-900`}>
+      <body className={`${inter.className} min-h-screen bg-gray-50 text-gray-900 relative overflow-x-hidden`}>
+        {/* Background Animations */}
+        <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 -left-4 w-72 h-72 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob" />
+          <div className="absolute top-0 -right-4 w-72 h-72 bg-indigo-400 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-2000" />
+          <div className="absolute -bottom-8 left-20 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-4000" />
+        </div>
+
         <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md">
           <div className="container mx-auto flex h-16 items-center justify-between px-4">
             <Link href="/" className="flex items-center gap-2 text-xl font-bold text-blue-600">

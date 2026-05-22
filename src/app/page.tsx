@@ -1,17 +1,49 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { PlaneTakeoff, PlaneLanding, Calendar, Users, Search } from 'lucide-react';
+import { PlaneTakeoff, PlaneLanding, Calendar, Users, Search, ArrowRightLeft, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { useFlightStore } from '@/store/useFlightStore';
+import { cn } from '@/components/ui/button';
+
+const POPULAR_AIRPORTS = [
+  { code: 'DXB', city: 'Dubai', country: 'United Arab Emirates' },
+  { code: 'LHR', city: 'London', country: 'United Kingdom' },
+  { code: 'JFK', city: 'New York', country: 'USA' },
+  { code: 'LAX', city: 'Los Angeles', country: 'USA' },
+  { code: 'SIN', city: 'Singapore', country: 'Singapore' },
+  { code: 'SYD', city: 'Sydney', country: 'Australia' },
+  { code: 'HND', city: 'Tokyo', country: 'Japan' },
+  { code: 'CDG', city: 'Paris', country: 'France' },
+  { code: 'FRA', city: 'Frankfurt', country: 'Germany' },
+];
 
 export default function HomePage() {
   const router = useRouter();
   const { searchQuery, setSearchQuery } = useFlightStore();
   
   const [formData, setFormData] = useState(searchQuery);
+  const [showOriginDropdown, setShowOriginDropdown] = useState(false);
+  const [showDestDropdown, setShowDestDropdown] = useState(false);
+  
+  const originRef = useRef<HTMLDivElement>(null);
+  const destRef = useRef<HTMLDivElement>(null);
+
+  const today = new Date().toISOString().split('T')[0];
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (originRef.current && !originRef.current.contains(event.target as Node)) {
+        setShowOriginDropdown(false);
+      }
+      if (destRef.current && !destRef.current.contains(event.target as Node)) {
+        setShowDestDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,93 +51,220 @@ export default function HomePage() {
     router.push('/search');
   };
 
+  const handleSwap = () => {
+    setFormData({
+      ...formData,
+      origin: formData.destination,
+      destination: formData.origin,
+    });
+  };
+
+  const filteredOriginAirports = POPULAR_AIRPORTS.filter(
+    a => a.city.toLowerCase().includes(formData.origin.toLowerCase()) || 
+         a.code.toLowerCase().includes(formData.origin.toLowerCase())
+  );
+
+  const filteredDestAirports = POPULAR_AIRPORTS.filter(
+    a => a.city.toLowerCase().includes(formData.destination.toLowerCase()) || 
+         a.code.toLowerCase().includes(formData.destination.toLowerCase())
+  );
+
   return (
     <div className="flex flex-col items-center justify-center space-y-12 py-12">
-      <div className="text-center space-y-4 max-w-2xl">
-        <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl text-gray-900">
-          Your Next Adventure <span className="text-blue-600">Starts Here</span>
+      <div className="text-center space-y-4 max-w-2xl relative">
+        <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl text-gray-900 leading-tight">
+          Your Next Adventure <br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
+            Starts Here
+          </span>
         </h1>
-        <p className="text-lg text-gray-600">
+        <p className="text-lg text-gray-600 font-medium">
           Search and book flights to over 100 destinations worldwide with the best prices guaranteed.
         </p>
       </div>
 
-      <div className="w-full max-w-5xl bg-white rounded-2xl shadow-xl p-6 md:p-8 border border-gray-100">
-        <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="relative">
-            <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">From</label>
-            <div className="relative">
-              <PlaneTakeoff className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <Input
-                placeholder="Origin City"
-                className="pl-10"
-                value={formData.origin}
-                onChange={(e) => setFormData({ ...formData, origin: e.target.value })}
-                required
-              />
+      <div className="w-full max-w-6xl bg-white/80 backdrop-blur-2xl rounded-[40px] shadow-2xl p-2 border border-white/50 relative z-40">
+        <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 items-stretch">
+          
+          {/* Origin & Destination with Swap */}
+          <div className="lg:col-span-2 grid grid-cols-[1fr_auto_1fr] items-center gap-0 bg-gray-50/50 rounded-3xl border border-gray-100/50 p-2 relative">
+            
+            {/* From */}
+            <div className="relative group z-50" ref={originRef}>
+              <div className="px-4 py-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1 block">From</label>
+                <div className="relative flex items-center">
+                  <PlaneTakeoff className={cn(
+                    "absolute left-0 h-5 w-5 transition-colors duration-300",
+                    showOriginDropdown ? "text-blue-600" : "text-gray-400"
+                  )} />
+                  <input
+                    type="text"
+                    placeholder="Origin City"
+                    className="w-full bg-transparent pl-8 pr-2 h-10 font-bold text-slate-900 placeholder:text-slate-300 focus:outline-none"
+                    value={formData.origin}
+                    onChange={(e) => {
+                      setFormData({ ...formData, origin: e.target.value });
+                      setShowOriginDropdown(true);
+                    }}
+                    onFocus={() => setShowOriginDropdown(true)}
+                    required
+                  />
+                </div>
+              </div>
+              {showOriginDropdown && filteredOriginAirports.length > 0 && (
+                <div className="absolute left-0 top-[calc(100%+12px)] w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-[100]">
+                  <div className="max-h-60 overflow-y-auto scrollbar-hide py-2">
+                    {filteredOriginAirports.map((airport) => (
+                      <button
+                        key={airport.code}
+                        type="button"
+                        className="w-full px-4 py-3 flex items-center gap-4 hover:bg-blue-50 transition-colors text-left group/item"
+                        onClick={() => {
+                          setFormData({ ...formData, origin: airport.city });
+                          setShowOriginDropdown(false);
+                        }}
+                      >
+                        <div className="h-10 w-10 rounded-xl bg-gray-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
+                          <MapPin className="h-5 w-5 text-gray-400 group-hover/item:text-blue-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-gray-900 truncate">{airport.city} ({airport.code})</p>
+                          <p className="text-xs text-gray-500 truncate">{airport.country}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Swap Button */}
+            <div className="relative z-50">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={handleSwap}
+                className="h-10 w-10 rounded-full border border-gray-100 bg-white shadow-md hover:shadow-lg hover:border-blue-200 hover:text-blue-600 transition-all mx-1 shrink-0"
+              >
+                <ArrowRightLeft className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* To */}
+            <div className="relative group z-50" ref={destRef}>
+              <div className="px-4 py-2 text-right lg:text-left">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1 block">To</label>
+                <div className="relative flex items-center justify-end lg:justify-start">
+                  <PlaneLanding className={cn(
+                    "absolute left-0 h-5 w-5 transition-colors duration-300",
+                    showDestDropdown ? "text-blue-600" : "text-gray-400"
+                  )} />
+                  <input
+                    type="text"
+                    placeholder="Destination"
+                    className="w-full bg-transparent pl-8 pr-2 h-10 font-bold text-slate-900 placeholder:text-slate-300 focus:outline-none"
+                    value={formData.destination}
+                    onChange={(e) => {
+                      setFormData({ ...formData, destination: e.target.value });
+                      setShowDestDropdown(true);
+                    }}
+                    onFocus={() => setShowDestDropdown(true)}
+                    required
+                  />
+                </div>
+              </div>
+              {showDestDropdown && filteredDestAirports.length > 0 && (
+                <div className="absolute right-0 lg:left-0 top-[calc(100%+12px)] w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-[100]">
+                  <div className="max-h-60 overflow-y-auto scrollbar-hide py-2">
+                    {filteredDestAirports.map((airport) => (
+                      <button
+                        key={airport.code}
+                        type="button"
+                        className="w-full px-4 py-3 flex items-center gap-4 hover:bg-blue-50 transition-colors text-left group/item"
+                        onClick={() => {
+                          setFormData({ ...formData, destination: airport.city });
+                          setShowDestDropdown(false);
+                        }}
+                      >
+                        <div className="h-10 w-10 rounded-xl bg-gray-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
+                          <MapPin className="h-5 w-5 text-gray-400 group-hover/item:text-blue-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-gray-900 truncate">{airport.city} ({airport.code})</p>
+                          <p className="text-xs text-gray-500 truncate">{airport.country}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="relative">
-            <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">To</label>
-            <div className="relative">
-              <PlaneLanding className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <Input
-                placeholder="Destination City"
-                className="pl-10"
-                value={formData.destination}
-                onChange={(e) => setFormData({ ...formData, destination: e.target.value })}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="relative">
-            <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">Departure</label>
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <Input
+          {/* Date Picker */}
+          <div className="bg-gray-50/50 rounded-3xl border border-gray-100/50 p-4 flex flex-col justify-center hover:bg-white transition-all group">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1 block">Departure</label>
+            <div className="relative flex items-center">
+              <Calendar className="absolute left-0 h-5 w-5 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
+              <input
                 type="date"
-                className="pl-10"
+                min={today}
+                className="w-full bg-transparent pl-8 font-bold text-slate-900 focus:outline-none cursor-pointer"
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                required
               />
             </div>
           </div>
 
-          <div className="relative">
-            <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">Passengers</label>
-            <div className="relative flex gap-2">
-              <div className="relative flex-1">
-                <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <Input
+          {/* Passengers & Search Button */}
+          <div className="flex items-center gap-2 bg-gray-50/50 rounded-3xl border border-gray-100/50 p-2 pl-4 hover:bg-white transition-all group">
+            <div className="flex-1">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1 block">Travelers</label>
+              <div className="relative flex items-center">
+                <Users className="absolute left-0 h-5 w-5 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
+                <input
                   type="number"
                   min="1"
                   max="9"
-                  className="pl-10"
+                  className="w-full bg-transparent pl-8 font-bold text-slate-900 focus:outline-none"
                   value={formData.passengers}
                   onChange={(e) => setFormData({ ...formData, passengers: parseInt(e.target.value) || 1 })}
                   required
                 />
               </div>
-              <Button type="submit" size="icon" className="h-10 w-12 shrink-0">
-                <Search className="h-5 w-5" />
-              </Button>
             </div>
+            <Button type="submit" size="icon" className="h-16 w-16 rounded-[24px] shadow-xl shadow-blue-500/20 hover:shadow-blue-500/40 hover:scale-105 transition-all shrink-0 bg-gradient-to-br from-blue-600 to-indigo-600">
+              <Search className="h-6 w-6 text-white" />
+            </Button>
           </div>
+          
         </form>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-5xl mt-8">
         {[
-          { title: 'Best Prices', desc: 'We compare hundreds of airlines to find you the best deals.' },
-          { title: 'Safe & Secure', desc: 'Your data and payments are protected with industry-standard encryption.' },
-          { title: '24/7 Support', desc: 'Our team is here to help you every step of the way.' }
+          { 
+            title: 'Best Prices', 
+            desc: 'We compare hundreds of airlines to find you the best deals.',
+            icon: '💎'
+          },
+          { 
+            title: 'Safe & Secure', 
+            desc: 'Your data and payments are protected with industry-standard encryption.',
+            icon: '🔒'
+          },
+          { 
+            title: '24/7 Support', 
+            desc: 'Our team is here to help you every step of the way.',
+            icon: '💬'
+          }
         ].map((feature, i) => (
-          <div key={i} className="p-6 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-            <h3 className="font-bold text-gray-900 mb-2">{feature.title}</h3>
-            <p className="text-sm text-gray-600">{feature.desc}</p>
+          <div key={i} className="group p-8 bg-white/50 backdrop-blur-sm rounded-[32px] border border-white shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-1">
+            <div className="text-4xl mb-4 group-hover:scale-110 transition-transform duration-500 inline-block">{feature.icon}</div>
+            <h3 className="text-xl font-black text-gray-900 mb-2">{feature.title}</h3>
+            <p className="text-sm text-gray-500 font-medium leading-relaxed">{feature.desc}</p>
           </div>
         ))}
       </div>
