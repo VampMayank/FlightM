@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { login } from '@/app/auth/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Plane } from 'lucide-react'
+import { Plane, ArrowRight } from 'lucide-react'
 
 export default async function LoginPage(props: {
   searchParams: Promise<{ error?: string; message?: string }>
@@ -12,44 +12,45 @@ export default async function LoginPage(props: {
   const message = searchParams.message
 
   return (
-    <div className="flex min-h-[calc(100vh-16rem)] flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8 bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-        <div className="text-center">
-          <div className="flex justify-center">
-            <div className="rounded-full bg-blue-100 p-3">
-              <Plane className="h-8 w-8 text-blue-600" />
+    <div className="flex min-h-[80vh] flex-col items-center justify-center px-4 sm:px-6">
+      <div className="w-full max-w-[440px] space-y-8 bg-white p-8 sm:p-10 rounded-2xl shadow-xl shadow-blue-900/5 border border-gray-100">
+        <div className="text-center space-y-2">
+          <div className="flex justify-center mb-4">
+            <div className="rounded-2xl bg-blue-600 p-3 shadow-lg shadow-blue-200">
+              <Plane className="h-8 w-8 text-white" />
             </div>
           </div>
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">Log in to your account</h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Or{' '}
-            <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500">
-              create a new account
+          <h2 className="text-3xl font-black text-slate-900 tracking-tight">Welcome Back</h2>
+          <p className="text-slate-500 font-medium">
+            New to FlightM?{' '}
+            <Link href="/register" className="text-blue-600 hover:text-blue-700 font-bold underline underline-offset-4 decoration-2">
+              Create an account
             </Link>
           </p>
         </div>
 
         <form action={login} className="mt-8 space-y-6">
           {error && (
-            <div className="rounded-md bg-red-50 p-4 text-sm text-red-700 border border-red-100">
+            <div className="rounded-xl bg-red-50 p-4 text-sm text-red-700 border border-red-100 font-medium animate-in fade-in slide-in-from-top-1">
               {error}
             </div>
           )}
           {message && (
-            <div className="rounded-md bg-green-50 p-4 text-sm text-green-700 border border-green-100">
+            <div className="rounded-xl bg-green-50 p-4 text-sm text-green-700 border border-green-100 font-medium animate-in fade-in slide-in-from-top-1">
               {message}
             </div>
           )}
 
-          <div className="space-y-4">
+          <div className="space-y-5">
             <Input
               id="email"
               name="email"
               type="email"
               autoComplete="email"
               required
-              label="Email address"
+              label="Email Address"
               placeholder="name@example.com"
+              className="h-12 text-base border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
             />
             <Input
               id="password"
@@ -59,6 +60,7 @@ export default async function LoginPage(props: {
               required
               label="Password"
               placeholder="••••••••"
+              className="h-12 text-base border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
             />
           </div>
 
@@ -68,22 +70,23 @@ export default async function LoginPage(props: {
                 id="remember-me"
                 name="remember-me"
                 type="checkbox"
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="h-5 w-5 rounded-md border-slate-300 text-blue-600 focus:ring-blue-500 transition-all cursor-pointer"
               />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+              <label htmlFor="remember-me" className="ml-3 block text-sm font-semibold text-slate-700 cursor-pointer">
                 Remember me
               </label>
             </div>
 
             <div className="text-sm">
-              <Link href="#" className="font-medium text-blue-600 hover:text-blue-500">
-                Forgot your password?
+              <Link href="#" className="font-bold text-blue-600 hover:text-blue-700 transition-colors">
+                Forgot password?
               </Link>
             </div>
           </div>
 
-          <Button type="submit" className="w-full">
+          <Button type="submit" className="w-full h-12 text-lg font-bold rounded-xl shadow-lg shadow-blue-200 active:scale-[0.98] transition-all group">
             Log In
+            <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
           </Button>
         </form>
       </div>
