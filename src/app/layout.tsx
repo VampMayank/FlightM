@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
-import { Plane } from "lucide-react";
+import { Plane, User } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
+import { LogoutButton } from "@/components/auth/LogoutButton";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -12,11 +14,14 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
   return (
     <html lang="en">
       <body className={`${inter.className} min-h-screen bg-gray-50 text-gray-900`}>
@@ -33,14 +38,28 @@ export default function RootLayout({
             </nav>
 
             <div className="flex items-center gap-4">
-              <Link href="/login">
-                <button className="text-sm font-medium hover:text-blue-600">Log In</button>
-              </Link>
-              <Link href="/register">
-                <button className="rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-                  Sign Up
-                </button>
-              </Link>
+              {user ? (
+                <div className="flex items-center gap-4">
+                  <Link href="/profile" className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors">
+                    <div className="rounded-full bg-blue-100 p-1">
+                      <User className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <span>{user.user_metadata?.full_name || user.email}</span>
+                  </Link>
+                  <LogoutButton />
+                </div>
+              ) : (
+                <>
+                  <Link href="/login">
+                    <button className="text-sm font-medium hover:text-blue-600">Log In</button>
+                  </Link>
+                  <Link href="/register">
+                    <button className="rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+                      Sign Up
+                    </button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </header>

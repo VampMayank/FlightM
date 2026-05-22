@@ -8,7 +8,9 @@ VALUES
     (uuid_generate_v4(), 'SQ200', 'SIN', 'SYD', NOW() + INTERVAL '1 day 12 hours', NOW() + INTERVAL '1 day 20 hours', 'Airbus A350', 600),
     (uuid_generate_v4(), 'SQ201', 'SIN', 'SYD', NOW() + INTERVAL '4 days', NOW() + INTERVAL '4 days 8 hours', 'Airbus A350', 650),
     (uuid_generate_v4(), 'AF275', 'HND', 'CDG', NOW() + INTERVAL '1 day 2 hours', NOW() + INTERVAL '1 day 15 hours', 'Boeing 787', 900),
-    (uuid_generate_v4(), 'AF276', 'HND', 'CDG', NOW() + INTERVAL '5 days', NOW() + INTERVAL '5 days 13 hours', 'Boeing 787', 950);
+    (uuid_generate_v4(), 'AF276', 'HND', 'CDG', NOW() + INTERVAL '5 days', NOW() + INTERVAL '5 days 13 hours', 'Boeing 787', 950),
+    (uuid_generate_v4(), 'LH400', 'FRA', 'JFK', NOW() + INTERVAL '1 day 6 hours', NOW() + INTERVAL '1 day 14 hours', 'Boeing 747', 750),
+    (uuid_generate_v4(), 'LH401', 'FRA', 'JFK', NOW() + INTERVAL '3 days 6 hours', NOW() + INTERVAL '3 days 14 hours', 'Boeing 747', 780);
 
 -- Function to seed seats for all flights
 DO $$
@@ -43,3 +45,9 @@ BEGIN
         END LOOP;
     END LOOP;
 END $$;
+
+-- Create a test user (password: password123)
+-- Note: This is a reference for manual insertion or via Supabase CLI
+-- For local development with Supabase CLI:
+-- INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, aud, role)
+-- VALUES ('d1b3b3b3-b3b3-b3b3-b3b3-b3b3b3b3b3b3', 'test@flightm.com', crypt('password123', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"full_name":"Test User"}', 'authenticated', 'authenticated');

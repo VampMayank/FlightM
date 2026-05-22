@@ -9,12 +9,15 @@ import { Button } from '@/components/ui/button';
 import { Plane, Calendar, MapPin, XCircle, CheckCircle, RefreshCcw, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/components/ui/button';
+import Link from 'next/link';
+import { useFlightStore } from '@/store/useFlightStore';
 
 export default function MyBookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const supabase = createClient();
+  const resetFlightStore = useFlightStore((state) => state.resetStore);
 
   const fetchBookings = useCallback(async (isInitial = false) => {
     if (!isInitial) setLoading(true);
@@ -52,6 +55,9 @@ export default function MyBookingsPage() {
       });
 
       if (error) throw error;
+      
+      // Reset flight store as per requirements
+      resetFlightStore();
       
       // Refresh list
       await fetchBookings();
@@ -164,14 +170,15 @@ export default function MyBookingsPage() {
                 <div className="flex flex-col justify-center gap-3 min-w-[120px]">
                   {booking.status !== 'cancelled' && (
                     <>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="w-full"
-                        onClick={() => alert('Rescheduling feature coming soon!')}
-                      >
-                        Reschedule
-                      </Button>
+                      <Link href={`/reschedule/${booking.id}`}>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="w-full"
+                        >
+                          Reschedule
+                        </Button>
+                      </Link>
                       <Button 
                         variant="danger" 
                         size="sm" 
