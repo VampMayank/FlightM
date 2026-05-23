@@ -15,25 +15,69 @@
     animation: fadeUp 0.8s cubic-bezier(0.2, 1, 0.3, 1) forwards;
   }
 
+  .animate-fade-right {
+    animation: fadeRight 0.8s cubic-bezier(0.2, 1, 0.3, 1) forwards;
+  }
+
   .animate-float {
     animation: float 6s ease-in-out infinite;
+  }
+
+  /* Core Typewriter Logic */
+  .typewriter {
+    display: inline-block;
+    overflow: hidden;
+    white-space: nowrap;
+    border-right: 3px solid #2563eb;
+    width: 0;
+  }
+
+  .typewriter-line-1 {
+    animation: 
+      typing 1.5s steps(30, end) forwards,
+      blink-caret .75s step-end infinite,
+      hide-cursor 0s forwards 1.5s;
+  }
+
+  .typewriter-line-2 {
+    animation: 
+      typing 1s steps(20, end) forwards,
+      blink-caret .75s step-end infinite,
+      hide-cursor 0s forwards 1s;
   }
 
   .animation-delay-100 { animation-delay: 100ms; }
   .animation-delay-200 { animation-delay: 200ms; }
   .animation-delay-300 { animation-delay: 300ms; }
   .animation-delay-500 { animation-delay: 500ms; }
+  .animation-delay-1000 { animation-delay: 1000ms; }
+  .animation-delay-1500 { animation-delay: 1500ms; }
+  .animation-delay-2000 { animation-delay: 2000ms; }
+  .animation-delay-3000 { animation-delay: 3000ms; }
 }
 
 @keyframes fadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeRight {
+  from { opacity: 0; transform: translateX(-50px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes typing {
+  from { width: 0 }
+  to { width: 100% }
+}
+
+@keyframes blink-caret {
+  from, to { border-color: transparent }
+  50% { border-color: #2563eb }
+}
+
+@keyframes hide-cursor {
+  to { border-color: transparent; border-right: none; }
 }
 
 @keyframes float {
@@ -42,24 +86,16 @@
 }
 
 @keyframes blob {
-  0% {
-    transform: translate(0px, 0px) scale(1);
-  }
-  33% {
-    transform: translate(30px, -50px) scale(1.1);
-  }
-  66% {
-    transform: translate(-20px, 20px) scale(0.9);
-  }
-  100% {
-    transform: translate(0px, 0px) scale(1);
-  }
+  0% { transform: translate(0px, 0px) scale(1); }
+  33% { transform: translate(30px, -50px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+  100% { transform: translate(0px, 0px) scale(1); }
 }
 
 :root {
-  --background: #f8fafc; /* gray-50 */
-  --foreground: #0f172a; /* slate-900 */
-  --primary: #2563eb; /* blue-600 */
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --primary: #2563eb;
 }
 
 body {
@@ -71,7 +107,5 @@ body {
 }
 
 @layer base {
-  button {
-    cursor: pointer;
-  }
+  button { cursor: pointer; }
 }
