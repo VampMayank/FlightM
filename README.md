@@ -1,23 +1,25 @@
-# FlightM - Flight Management Web App (PWA)
+# FlightM - Premium Flight Management Web App (PWA)
 
-A responsive, production-like flight management application built with Next.js 14, Supabase, and Zustand.
+A responsive, production-grade flight management application built with Next.js 15, Supabase, and Zustand. Features a cinematic entrance and comprehensive round-trip booking capabilities.
 
-## 🚀 Features
+## 🚀 Key Features
 
-- **Flight Search**: Search flights by origin, destination, and date.
-- **Interactive Seat Selection**: Live aircraft seat map with real-time availability updates using Supabase Realtime.
-- **Booking Flow**: Seamless journey from search to confirmation with PNR generation.
-- **Booking Management**: View, reschedule, and cancel bookings.
-- **PWA Support**: Installable on mobile/desktop with offline fallback and caching.
-- **Atomic Operations**: Prevents double-booking using PostgreSQL RPC functions.
-- **Security**: Row Level Security (RLS) ensures users only access their own data.
+- **Cinematic Experience**: Smooth splash screen with a 3D-like flight takeoff animation and sequential typewriter hero reveals.
+- **Round-Trip Booking**: Full support for one-way and round-trip journeys with a streamlined two-step flight selection process.
+- **Dynamic Seat Selection**: Choose between free **Random Assignment** or paid **Manual Selection** with an interactive seat map.
+- **In-flight Dining**: Integrated meal and beverage selection (Standard, Premium, Snack) during the booking flow.
+- **Auth-Protected Booking**: Secure booking protocol that requires user authentication before finalizing reservations.
+- **PWA Support**: Fully installable on mobile/desktop with offline fallback and advanced caching strategies.
+- **Real-time Synchronization**: Live aircraft seat maps with instant availability updates via Supabase Realtime.
+- **Atomic Operations**: PostgreSQL RPC functions ensure no double-bookings or data inconsistencies.
 
 ## 🛠 Tech Stack
 
-- **Frontend**: Next.js 14+ (App Router), TypeScript, Tailwind CSS
+- **Frontend**: Next.js 15 (App Router), TypeScript, Tailwind CSS
+- **Animations**: CSS Keyframes, Lucide React, Framer-inspired transitions
 - **Database & Auth**: Supabase (PostgreSQL, Auth, Realtime)
 - **State Management**: Zustand with `persist` middleware
-- **PWA**: `next-pwa`
+- **Date Handling**: `date-fns`
 - **Icons**: Lucide React
 
 ## 📦 Local Setup
@@ -40,48 +42,31 @@ A responsive, production-like flight management application built with Next.js 1
    ```
 
 4. **Supabase Configuration**:
-   - Run the migration script in `supabase/migrations/20240521000000_initial_schema.sql` in your Supabase SQL Editor.
-   - Run the seed script in `supabase/seed.sql` to populate initial flights and seats.
+   - **Step 1**: Run the initial schema migration in `supabase/migrations/20240521000000_initial_schema.sql`.
+   - **Step 2**: Apply the round-trip support migration in `supabase/migrations/20240523000000_round_trip_support.sql`.
+   - **Step 3 (Recommended)**: Run `supabase/seed_expanded.sql` to populate a full week of flights and seats across all supported routes.
 
 5. **Run the development server**:
    ```bash
    npm run dev
    ```
 
-## 🏗 Zustand Store Structure
+## 🏗 Zustand Store Structure (`useFlightStore`)
 
-The application uses two primary Zustand stores:
+The application state has been enhanced to handle complex itineraries:
+- **`searchQuery`**: Now includes `tripType` and `returnDate`.
+- **Itinerary Tracking**: Supports `selectedFlight` (Outbound) and `selectedReturnFlight` (Inbound).
+- **Extras**: Tracks `seatSelectionMode` (random/manual) and `foodOption`.
+- **Security**: Sensitive passenger data is excluded from persistent storage using `partialize`.
 
-### `useFlightStore`
-Manages the flight booking journey state.
-- **Fields**: `searchQuery`, `selectedFlight`, `selectedSeat`, `passengerData`, `currentStep`.
-- **Persistence**: Saved to `localStorage` via `persist` middleware.
-- **Security**: Uses `partialize` to exclude sensitive fields like `passport_no` from being saved to `localStorage`.
-- **Optimistic UI**: Tracks seat selection before database confirmation.
+## 🗄 Database Schema Updates
 
-### `useUserStore`
-Manages user authentication and session.
-- **Fields**: `session`, `bookings` (cache).
-- **Persistence**: Only the `session` object is persisted to ensure seamless logins.
+- `bookings`: Now supports `return_flight_id` and `return_seat_id` for atomic round-trip reservations.
+- `reserve_seat (RPC)`: Updated to handle multi-segment locking and atomic updates for both legs of a journey in a single transaction.
 
-## 🗄 Database Schema
-
-- `flights`: Flight details (route, time, aircraft, price).
-- `seats`: Dynamic seat map for each flight with availability and class info.
-- `bookings`: Link between users, flights, and seats.
-- `passengers`: Personal details for each booking.
-- `reschedules`: History of flight changes.
-
-### Atomic Operations (RPC)
-- `reserve_seat`: Uses `SELECT FOR UPDATE` to lock a seat row, ensuring no two users can book the same seat simultaneously.
-- `cancel_booking`: Updates booking status and frees the seat atomically, enforcing a 2-hour departure rule.
-
-## 📱 PWA & Offline Support
-- **Manifest**: Located in `public/manifest.json`.
-- **Offline Fallback**: Custom page at `/offline` shown when connection is lost.
-- **Caching**: 
-    - `StaleWhileRevalidate` for flight searches.
-    - `CacheFirst` for static assets.
+## 📱 PWA & Performance
+- **High Stacking Context**: The splash screen and loading fallbacks use a `z-index` of `100000` to ensure a glitch-free initial load.
+- **Optimized Assets**: Uses standard CSS transforms and lightweight SVG icons for maximum performance.
 
 ---
-*Developed as part of an Internship Application.*
+*Developed as part of a high-end travel experience prototype.*
