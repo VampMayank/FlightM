@@ -6,6 +6,7 @@ import { PlaneTakeoff, PlaneLanding, Calendar, Users, Search, ArrowRightLeft, Ma
 import { Button } from '@/components/ui/button';
 import { useFlightStore } from '@/store/useFlightStore';
 import { cn } from '@/components/ui/button';
+import SplashScreen from '@/components/SplashScreen';
 
 const POPULAR_AIRPORTS = [
   { code: 'DXB', city: 'Dubai', country: 'United Arab Emirates' },
@@ -22,6 +23,7 @@ const POPULAR_AIRPORTS = [
 export default function HomePage() {
   const router = useRouter();
   const { searchQuery, setSearchQuery } = useFlightStore();
+  const [showSplash, setShowSplash] = useState(false);
   
   const [formData, setFormData] = useState(searchQuery);
   const [showOriginDropdown, setShowOriginDropdown] = useState(false);
@@ -33,6 +35,12 @@ export default function HomePage() {
   const today = new Date().toISOString().split('T')[0];
 
   useEffect(() => {
+    const hasSeenSplash = sessionStorage.getItem('hasSeenSplash');
+    if (!hasSeenSplash) {
+      setShowSplash(true);
+      sessionStorage.setItem('hasSeenSplash', 'true');
+    }
+
     function handleClickOutside(event: MouseEvent) {
       if (originRef.current && !originRef.current.contains(event.target as Node)) {
         setShowOriginDropdown(false);
@@ -69,6 +77,10 @@ export default function HomePage() {
          a.code.toLowerCase().includes(formData.destination.toLowerCase())
   );
 
+  if (showSplash) {
+    return <SplashScreen onFinish={() => setShowSplash(false)} />;
+  }
+
   return (
     <div className="flex flex-col items-center justify-center space-y-12 py-12">
       <div className="text-center space-y-4 max-w-2xl relative">
@@ -84,7 +96,30 @@ export default function HomePage() {
       </div>
 
       <div className="w-full max-w-6xl bg-white/80 backdrop-blur-2xl rounded-[40px] shadow-2xl p-2 border border-white/50 relative z-40">
-        <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 items-stretch">
+        <div className="flex gap-4 p-4 border-b border-gray-100/50">
+          <button 
+            type="button"
+            onClick={() => setFormData({ ...formData, tripType: 'one-way' })}
+            className={cn(
+              "px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all",
+              formData.tripType === 'one-way' ? "bg-blue-600 text-white shadow-lg shadow-blue-200" : "bg-gray-50 text-gray-400 hover:bg-gray-100"
+            )}
+          >
+            One Way
+          </button>
+          <button 
+            type="button"
+            onClick={() => setFormData({ ...formData, tripType: 'round-trip' })}
+            className={cn(
+              "px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all",
+              formData.tripType === 'round-trip' ? "bg-blue-600 text-white shadow-lg shadow-blue-200" : "bg-gray-50 text-gray-400 hover:bg-gray-100"
+            )}
+          >
+            Round Trip
+          </button>
+        </div>
+
+        <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2 items-stretch p-2">
           
           {/* Origin & Destination with Swap */}
           <div className="lg:col-span-2 grid grid-cols-[1fr_auto_1fr] items-center gap-0 bg-gray-50/50 rounded-3xl border border-gray-100/50 p-2 relative">
@@ -214,6 +249,26 @@ export default function HomePage() {
                 className="w-full bg-transparent pl-8 font-bold text-slate-900 focus:outline-none cursor-pointer"
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                required
+              />
+            </div>
+          </div>
+
+          {/* Return Date Picker */}
+          <div className={cn(
+            "bg-gray-50/50 rounded-3xl border border-gray-100/50 p-4 flex flex-col justify-center transition-all group",
+            formData.tripType === 'round-trip' ? "opacity-100 hover:bg-white" : "opacity-30 pointer-events-none grayscale"
+          )}>
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1 block">Arrival</label>
+            <div className="relative flex items-center">
+              <Calendar className="absolute left-0 h-5 w-5 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
+              <input
+                type="date"
+                min={formData.date || today}
+                className="w-full bg-transparent pl-8 font-bold text-slate-900 focus:outline-none cursor-pointer"
+                value={formData.returnDate}
+                onChange={(e) => setFormData({ ...formData, returnDate: e.target.value })}
+                required={formData.tripType === 'round-trip'}
               />
             </div>
           </div>

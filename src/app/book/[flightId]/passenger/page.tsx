@@ -7,14 +7,23 @@ import { useRouter } from 'next/navigation';
 import { useFlightStore } from '@/store/useFlightStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ChevronLeft, ChevronRight, User, ShieldCheck, Globe, Calendar, Info, Plane } from 'lucide-react';
+import { ChevronLeft, ChevronRight, User, ShieldCheck, Globe, Calendar, Info, Plane, Utensils } from 'lucide-react';
 
 import { use } from 'react';
 
 export default function PassengerDetailsPage({ params: paramsPromise }: { params: Promise<{ flightId: string }> }) {
   const params = use(paramsPromise);
   const router = useRouter();
-  const { selectedFlight, selectedSeat, passengerData, setPassengerData, setCurrentStep } = useFlightStore();
+  const { 
+    selectedFlight, 
+    selectedReturnFlight,
+    selectedSeat, 
+    seatSelectionMode,
+    foodOption,
+    passengerData, 
+    setPassengerData, 
+    setCurrentStep 
+  } = useFlightStore();
 
   const [formData, setFormData] = useState(passengerData || {
     full_name: '',
@@ -40,6 +49,11 @@ export default function PassengerDetailsPage({ params: paramsPromise }: { params
     setCurrentStep(3); // Step 3: Confirmation
     router.push(`/book/${params.flightId}/confirm`);
   };
+
+  const seatCharge = seatSelectionMode === 'manual' ? 15 : 0;
+  const foodCharge = foodOption === 'premium' ? 25 : foodOption === 'snack' ? 10 : 0;
+  let totalPrice = Number(selectedFlight.base_price) + seatCharge + foodCharge;
+  if (selectedReturnFlight) totalPrice += Number(selectedReturnFlight.base_price) + seatCharge;
 
   return (
     <div className="max-w-5xl mx-auto space-y-10 pb-20 pt-6">
@@ -169,33 +183,19 @@ export default function PassengerDetailsPage({ params: paramsPromise }: { params
                   <Plane className="h-6 w-6 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Flight</p>
-                  <p className="text-lg font-black text-slate-900">{selectedFlight.flight_no}</p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex justify-between items-center text-sm font-bold uppercase tracking-wider">
-                  <span className="text-slate-400">Origin</span>
-                  <span className="text-slate-900">{selectedFlight.origin}</span>
-                </div>
-                <div className="w-full h-px bg-slate-100 relative">
-                  <Plane className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 rotate-90 bg-white" />
-                </div>
-                <div className="flex justify-between items-center text-sm font-bold uppercase tracking-wider">
-                  <span className="text-slate-400">Destination</span>
-                  <span className="text-slate-900">{selectedFlight.destination}</span>
+                  <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Itinerary</p>
+                  <p className="text-sm font-black text-slate-900">{selectedFlight.origin} ↔ {selectedFlight.destination}</p>
                 </div>
               </div>
 
               <div className="pt-6 border-t border-slate-100 space-y-4">
                 <div className="flex justify-between items-center">
                   <div className="space-y-1">
-                     <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Selected Seat</p>
-                     <p className="text-lg font-black text-slate-900">{selectedSeat.seat_number}</p>
+                     <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Seat Selection</p>
+                     <p className="text-sm font-black text-slate-900">{selectedSeat.seat_number} ({seatSelectionMode})</p>
                   </div>
-                  <div className="bg-blue-50 px-3 py-1 rounded-full">
-                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{selectedSeat.class}</p>
+                  <div className="text-right">
+                    <p className="text-xs font-black text-blue-600 capitalize">{foodOption?.replace('-', ' ')} Meal</p>
                   </div>
                 </div>
               </div>
@@ -206,7 +206,7 @@ export default function PassengerDetailsPage({ params: paramsPromise }: { params
                   <div className="text-right">
                     <p className="text-xs font-bold text-slate-400 mb-1">USD</p>
                     <p className="text-4xl font-black text-blue-600 tracking-tighter">
-                      ${Number(selectedFlight.base_price) + Number(selectedSeat.extra_fee)}
+                      ${totalPrice}
                     </p>
                   </div>
                 </div>

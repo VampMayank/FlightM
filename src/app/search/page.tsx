@@ -2,20 +2,23 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plane, Clock, ArrowRight, Search, SlidersHorizontal } from 'lucide-react';
+import { Plane, Clock, ArrowRight, Search, SlidersHorizontal, ArrowLeftRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useFlightStore } from '@/store/useFlightStore';
 import { Flight } from '@/types/database';
 import { Button } from '@/components/ui/button';
-import { format, differenceInMinutes } from 'date-fns';
+import { format, differenceInMinutes, startOfDay } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 export default function SearchResultsPage() {
   const router = useRouter();
-  const { searchQuery, setSelectedFlight, setCurrentStep } = useFlightStore();
+  const { searchQuery, setSelectedFlight, setSelectedReturnFlight, setCurrentStep } = useFlightStore();
   const [flights, setFlights] = useState<Flight[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectingReturn, setSelectingReturn] = useState(false);
+  const [selectedDeparture, setSelectedDeparture] = useState<Flight | null>(null);
   const supabase = createClient();
 
   const formatDuration = (departs: string, arrives: string) => {
@@ -25,44 +28,59 @@ export default function SearchResultsPage() {
     return `${h}h ${m}m`;
   };
 
-  useEffect(() => {
-    async function fetchFlights() {
-      setLoading(true);
-      try {
-        let query = supabase
-          .from('flights')
-          .select('*')
-          .ilike('origin', `%${searchQuery.origin}%`)
-          .ilike('destination', `%${searchQuery.destination}%`);
+  const fetchFlights = useCallback(async (origin: string, destination: string, date: string) => {
+    setLoading(true);
+    try {
+      let query = supabase
+        .from('flights')
+        .select('*')
+        .ilike('origin', `%${origin}%`)
+        .ilike('destination', `%${destination}%`);
 
-        if (searchQuery.date) {
-          const startDate = new Date(searchQuery.date);
-          const endDate = new Date(searchQuery.date);
-          endDate.setDate(endDate.getDate() + 1);
-          
-          query = query
-            .gte('departs_at', startDate.toISOString())
-            .lt('departs_at', endDate.toISOString());
-        }
-
-        const { data, error } = await query;
-
-        if (error) throw error;
-        setFlights(data || []);
-      } catch (err: unknown) {
-        console.error('Error fetching flights:', err);
-      } finally {
-        setLoading(false);
+      if (date) {
+        // Use startOfDay to avoid timezone issues when filtering
+        const startDate = startOfDay(new Date(date));
+        const endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + 1);
+        
+        query = query
+          .gte('departs_at', startDate.toISOString())
+          .lt('departs_at', endDate.toISOString());
       }
-    }
 
-    fetchFlights();
-  }, [searchQuery, supabase]);
+      const { data, error } = await query;
+      if (error) throw error;
+      setFlights(data || []);
+    } catch (err: unknown) {
+      console.error('Error fetching flights:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [supabase]);
+
+  useEffect(() => {
+    if (!selectingReturn) {
+      fetchFlights(searchQuery.origin, searchQuery.destination, searchQuery.date);
+    } else if (searchQuery.returnDate) {
+      fetchFlights(searchQuery.destination, searchQuery.origin, searchQuery.returnDate);
+    }
+  }, [searchQuery, selectingReturn, fetchFlights]);
 
   const handleSelectFlight = (flight: Flight) => {
-    setSelectedFlight(flight);
-    setCurrentStep(1); 
-    router.push(`/book/${flight.id}/seat`);
+    if (searchQuery.tripType === 'round-trip' && !selectingReturn) {
+      setSelectedDeparture(flight);
+      setSelectedFlight(flight);
+      setSelectingReturn(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      if (selectingReturn) {
+        setSelectedReturnFlight(flight);
+      } else {
+        setSelectedFlight(flight);
+      }
+      setCurrentStep(1); 
+      router.push(`/book/${selectedDeparture?.id || flight.id}/seat`);
+    }
   };
 
   if (loading) {
@@ -73,12 +91,18 @@ export default function SearchResultsPage() {
           <Plane className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-8 w-8 text-blue-600" />
         </div>
         <div className="text-center space-y-2">
-          <p className="text-2xl font-black text-slate-900 tracking-tight">Searching Flights</p>
+          <p className="text-2xl font-black text-slate-900 tracking-tight">
+            {selectingReturn ? 'Finding Return Flights' : 'Searching Flights'}
+          </p>
           <p className="text-slate-500 font-medium animate-pulse">Finding the best routes for your journey...</p>
         </div>
       </div>
     );
   }
+
+  const currentOrigin = selectingReturn ? searchQuery.destination : searchQuery.origin;
+  const currentDest = selectingReturn ? searchQuery.origin : searchQuery.destination;
+  const currentDate = selectingReturn ? searchQuery.returnDate : searchQuery.date;
 
   return (
     <div className="max-w-5xl mx-auto space-y-10 py-6">
@@ -86,25 +110,29 @@ export default function SearchResultsPage() {
       <div className="bg-white p-8 rounded-[32px] shadow-2xl shadow-blue-900/5 border border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6">
         <div className="flex items-center gap-6">
           <div className="h-14 w-14 rounded-2xl bg-blue-50 flex items-center justify-center">
-            <Search className="h-7 w-7 text-blue-600" />
+            {selectingReturn ? <ArrowLeftRight className="h-7 w-7 text-blue-600" /> : <Search className="h-7 w-7 text-blue-600" />}
           </div>
           <div className="space-y-1">
             <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-              {searchQuery.origin} <ArrowRight className="h-6 w-6 text-blue-500" /> {searchQuery.destination}
+              {currentOrigin} <ArrowRight className="h-6 w-6 text-blue-500" /> {currentDest}
             </h1>
             <div className="flex items-center gap-3 text-slate-500 font-bold uppercase tracking-wider text-xs">
-              <span>{searchQuery.date ? format(new Date(searchQuery.date), 'MMM dd, yyyy') : 'Any Date'}</span>
+              <span className="text-blue-600 font-black">{selectingReturn ? 'STEP 2: SELECT RETURN' : 'STEP 1: SELECT DEPARTURE'}</span>
+              <span className="h-1 w-1 rounded-full bg-slate-300" />
+              <span>{currentDate ? format(new Date(currentDate), 'MMM dd, yyyy') : 'Any Date'}</span>
               <span className="h-1 w-1 rounded-full bg-slate-300" />
               <span>{searchQuery.passengers} Passenger{searchQuery.passengers > 1 ? 's' : ''}</span>
             </div>
           </div>
         </div>
         <div className="flex gap-3">
+          {selectingReturn && (
+            <Button variant="outline" className="h-12 px-6 rounded-2xl font-bold border-slate-200" onClick={() => setSelectingReturn(false)}>
+              Back to Departure
+            </Button>
+          )}
           <Button variant="outline" className="h-12 px-6 rounded-2xl font-bold border-slate-200" onClick={() => router.push('/')}>
-            Change Search
-          </Button>
-          <Button variant="secondary" className="h-12 w-12 rounded-2xl p-0 flex items-center justify-center border-slate-200">
-            <SlidersHorizontal className="h-5 w-5 text-slate-600" />
+            New Search
           </Button>
         </div>
       </div>
@@ -133,7 +161,10 @@ export default function SearchResultsPage() {
             {flights.map((flight) => (
               <div 
                 key={flight.id} 
-                className="group bg-white p-8 rounded-[32px] border border-slate-100 shadow-lg shadow-blue-900/[0.02] hover:shadow-blue-900/10 hover:border-blue-200 transition-all duration-500 flex flex-col md:flex-row items-center justify-between gap-10 relative overflow-hidden"
+                className={cn(
+                  "group bg-white p-8 rounded-[32px] border border-slate-100 shadow-lg shadow-blue-900/[0.02] hover:shadow-blue-900/10 hover:border-blue-200 transition-all duration-500 flex flex-col md:flex-row items-center justify-between gap-10 relative overflow-hidden",
+                  selectedDeparture?.id === flight.id && "ring-2 ring-blue-500 border-blue-500"
+                )}
               >
                 <div className="absolute top-0 left-0 w-2 h-full bg-blue-500 transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500" />
                 
@@ -187,7 +218,7 @@ export default function SearchResultsPage() {
                     onClick={() => handleSelectFlight(flight)}
                     className="w-full h-12 rounded-2xl font-black text-base shadow-lg shadow-blue-200 hover:shadow-blue-300 hover:scale-[1.02] active:scale-[0.98] transition-all group/btn"
                   >
-                    Select Seat
+                    {selectingReturn ? 'Confirm Return' : searchQuery.tripType === 'round-trip' ? 'Select Departure' : 'Select Flight'}
                     <ArrowRight className="ml-2 h-5 w-5 group-hover/btn:translate-x-1 transition-transform" />
                   </Button>
                 </div>
