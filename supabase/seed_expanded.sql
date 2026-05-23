@@ -1,9 +1,5 @@
--- Clear existing dynamic data (optional, but good for a clean seed)
--- DELETE FROM reschedules;
--- DELETE FROM passengers;
--- DELETE FROM bookings;
--- DELETE FROM seats;
--- DELETE FROM flights;
+-- Clear existing dynamic data (ensures a clean seed and avoids unique constraint violations)
+TRUNCATE reschedules, passengers, bookings, seats, flights CASCADE;
 
 -- Expanded Seed Data
 DO $$
@@ -48,7 +44,7 @@ BEGIN
                             destinations[d_idx], 
                             NOW() + (day_offset || ' days')::interval + (hour_offset * 6 || ' hours')::interval,
                             NOW() + (day_offset || ' days')::interval + (hour_offset * 6 + 8 || ' hours')::interval, -- 8 hour flat duration for seed
-                            aircrafts[1 + (random() * 4)::int],
+                            aircrafts[1 + (random() * (array_length(aircrafts, 1) - 1))::int],
                             400 + (random() * 600)::int
                         );
 
