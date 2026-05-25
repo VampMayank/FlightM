@@ -29,8 +29,8 @@ export default function ReschedulePage() {
         .from('bookings')
         .select(`
           *,
-          flight:flights(*),
-          seat:seats(*)
+          flight:flights!bookings_flight_id_fkey(*),
+          seat:seats!bookings_seat_id_fkey(*)
         `)
         .eq('id', bookingId)
         .single();
