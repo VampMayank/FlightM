@@ -81,7 +81,7 @@ export default function ConfirmationPage({ params: _paramsPromise }: { params: P
       if (passengerError) throw passengerError;
 
       resetStore();
-      router.push('/my-bookings?success=true');
+      router.push(`/book/success/${bookingId}`);
     } catch (err: unknown) {
       const error = err as { message?: string };
       console.error('Booking failed:', error);

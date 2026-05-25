@@ -25,12 +25,16 @@ export interface Booking {
   user_id: string;
   flight_id: string;
   seat_id: string;
+  return_flight_id?: string | null;
+  return_seat_id?: string | null;
   status: 'confirmed' | 'cancelled' | 'rescheduled';
   booked_at: string;
   total_price: number;
   pnr_code: string;
   flight?: Flight;
   seat?: Seat;
+  return_flight?: Flight;
+  return_seat?: Seat;
 }
 
 export interface Passenger {
